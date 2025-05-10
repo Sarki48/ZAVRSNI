@@ -7,6 +7,8 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 var glazba = true; // Flag for background music
 
+checkAudio(); // Check audio status on load
+
 
 // Game Configuration
 const config = {
@@ -118,6 +120,10 @@ function updateRoadMarkings() {
     }
 }
 
+function increaseDifficulty() {
+    gameState.obstacles.forEach(obs => obs.speed += 20.5); // Increase obstacle speed
+}
+
 function update() {
     if (!gameState.gameStarted || gameState.gameOver) return;
 
@@ -136,6 +142,11 @@ function update() {
         if (obs.y > canvas.height) {
             gameState.obstacles.splice(i, 1);
             gameState.score++;
+
+            // Increase difficulty every 10 points
+            if (gameState.score % 10 === 0) {
+                increaseDifficulty();
+            }
         }
 
         // Check collisions
@@ -346,11 +357,26 @@ function clearScores() {
 function generateObstacle() {
     const lane = Math.floor(Math.random() * road.lanes);
     const types = [
-        { width: 159, height: 145, color: '#FF2A2A', speed: 3.5 }, // Regular car
-        { width: 159, height: 145, color: '#FFAA2A', speed: 3.5 },  // Fast car
-        { width: 159, height: 145, color: '#0000AA', speed: 3.5 }   // Blue car
+        { width: 159, height: 145, color: '#FF2A2A' }, // Regular car
+        { width: 159, height: 145, color: '#FFAA2A' },  // Fast car
+        { width: 159, height: 145, color: '#0000AA' }   // Blue car
     ];
     const type = types[Math.floor(Math.random() * types.length)];
+
+    // Calculate dynamic speed based on score
+    const baseSpeed = 3.5;
+    const speedIncrement = Math.floor(gameState.score / 10) * 0.8; // Increase speed every 10 points
+    let dynamicSpeed = baseSpeed + speedIncrement;
+
+    // Cap the maximum speed to ensure fairness
+    const maxSpeed = 8; // Adjust this value as needed
+    dynamicSpeed = Math.min(dynamicSpeed, maxSpeed);
+
+    // Ensure not all three lanes are occupied
+    const lanesOccupied = new Set(gameState.obstacles.map(obs => Math.floor(obs.x / road.laneWidth)));
+    if (lanesOccupied.size >= road.lanes - 1) {
+        return; // Skip generating a new obstacle if almost all lanes are occupied
+    }
 
     // Check for overlapping obstacles in the same lane
     const laneX = lane * road.laneWidth + (road.laneWidth - type.width) / 2;
@@ -362,6 +388,7 @@ function generateObstacle() {
         gameState.obstacles.push({
             x: laneX,
             y: -type.height,
+            speed: dynamicSpeed, // Assign capped dynamic speed
             ...type
         });
     }
@@ -413,6 +440,8 @@ function resetGame() {
     player.moving = false;
 
     gameState.gameLoop = requestAnimationFrame(gameLoop); // Restart the game loop
+
+    checkAudio(); // Check audio status
 }
 
 function updateAsides() {
@@ -453,11 +482,13 @@ function stopBackgroundMusic() {
     music.pause();
     music.currentTime = 0; // Reset to the beginning
 }
+
 function checkAudio() {
     const audio = document.getElementById('backgroundMusic');
     const audioToggle = document.getElementById('audioToggle');
     if (audio.paused) {
         audioToggle.src = 'imgs/audioOff.jpg'; // Show audio off icon
+        glazba = false; // Stop background music
     }
     else {
         audioToggle.src = 'imgs/audioOn.jpg'; // Show audio on icon
