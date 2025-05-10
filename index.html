@@ -8,6 +8,7 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="main-menu">
+    <audio id="backgroundMusic" src="audio/glazba.mp3" loop autoplay></audio>
     <div class="side-animation left"></div>
     <div class="side-animation right"></div>
     <div class="container">
@@ -16,9 +17,13 @@
             <img src="imgs/logo.jpg" alt="Logo Retro Utrke" class="logo">
         </div>
         <div class="menu-buttons">
-            <a href="igra.html" class="btn play-btn">ZAPOCNI IGRU</a>
+            <a href="igra.html" class="btn play-btn">POKRENI IGRU</a>
             <a href="upute.html" class="btn instructions-btn">UPUTE</a>
         </div>
+        <div class="audio-toggle">
+            <button class="audioBtn" onclick="toggleAudio()"><img id="audioToggle" src="imgs/audioOn.jpg" alt="Audio Toggle"></button>
+        </div>
     </div>
+    <script src="script.js"></script>
 </body>
 </html>

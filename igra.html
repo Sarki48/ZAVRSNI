@@ -8,12 +8,32 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="game-page">
+    <audio id="backgroundMusic" src="audio/glazba.mp3" loop></audio>
+    <audio id="gameOverSound" src="audio/gameOver.mp3"></audio>
+
+    <div class="audio-toggle">
+            <button class="audioBtn" onclick="toggleAudio()"><img id="audioToggle" src="imgs/audioOn.jpg" alt="Audio Toggle"></button>
+    </div>
+    
+    <aside class="ljevo">
+        <div class="highscoreboard">
+            <h2>NAJBOLJI REZULTAT:</h2>
+            <p id="highscore">0</p>
+        </div>
+    </aside>
     <div class="container">
         <canvas id="gameCanvas" width="600" height="800"></canvas>
         <div class="back-to-menu">
             <a href="index.html" class="btn menu-btn">GLAVNI IZBORNIK</a>
         </div>
     </div>
+    <aside class="desno">
+        <div class="scoreboard">
+            <h2>REZULTATI:</h2>
+            <ul id="scoreList"></ul> <!-- Placeholder for score list -->
+        </div>
+        <button class="btn" onclick="clearScores()" >OBRIŠI REZULTATE</button>
+    </aside>
     <script src="script.js"></script>
 </body>
 </html>

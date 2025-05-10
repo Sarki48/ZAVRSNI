@@ -5,6 +5,8 @@
 // Canvas Setup
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
+var glazba = true; // Flag for background music
+
 
 // Game Configuration
 const config = {
@@ -92,6 +94,7 @@ function initGame() {
             e.preventDefault(); // Prevent scrolling when using arrow keys
         }
     });
+    playBackgroundMusic(); // Start music
     gameLoop();
 }
 
@@ -268,31 +271,75 @@ function drawScore() {
 function drawStartScreen() {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
+
     ctx.fillStyle = '#2AFF2A';
     ctx.font = '24px "Press Start 2P"';
     ctx.textAlign = 'center';
     ctx.fillText('RETRO RACER', canvas.width/2, canvas.height/2 - 30);
-    
+
     ctx.fillStyle = '#FFF';
     ctx.font = '16px "Press Start 2P"';
-    ctx.fillText('USE ARROW KEYS', canvas.width/2, canvas.height/2 + 20);
-    ctx.fillText('TO CHANGE LANES', canvas.width/2, canvas.height/2 + 50);
-    
+    ctx.fillText('KORISTITE TIPKE SA STRELICAMA', canvas.width/2, canvas.height/2 + 20);
+    ctx.fillText('ZA PROMJENU TRAKA', canvas.width/2, canvas.height/2 + 50);
+
     ctx.fillStyle = '#FF2A2A';
-    ctx.fillText('PRESS ANY KEY', canvas.width/2, canvas.height/2 + 100);
+    ctx.fillText('PRITISNITE BILO KOJU TIPKU', canvas.width/2, canvas.height/2 + 100);
 }
 
 function drawGameOver() {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
-    
+
     ctx.fillStyle = '#FF2A2A';
-    ctx.font = '28px "Press Start 2P"';
-    ctx.textAlign = 'center'; // Ensure text is centered
-    ctx.fillText('GAME OVER', canvas.width / 2, canvas.height / 2 - 30);
-    ctx.fillText(`SCORE: ${gameState.score}`, canvas.width / 2, canvas.height / 2 + 30);
-    ctx.fillText('PRESS R TO RESTART', canvas.width / 2, canvas.height / 2 + 80);
+    ctx.font = '17px "Press Start 2P"';
+    ctx.textAlign = 'center';
+    ctx.fillText('KRAJ IGRE', canvas.width / 2, canvas.height / 2 - 30);
+    ctx.fillText(`REZULTAT: ${gameState.score}`, canvas.width / 2, canvas.height / 2 + 30);
+    ctx.fillText('PRITISNITE R ZA PONOVNO POKRETANJE', canvas.width / 2, canvas.height / 2 + 80);
+    saveScore();
+    stopBackgroundMusic(); // Stop music
+    sound = document.getElementById('gameOverSound');
+    sound.play(); // Restart music
+    sound.loop = false; // Loop the music
+    // Restart music
+}
+
+function saveScore() {
+    const scores = JSON.parse(localStorage.getItem("scores")) || [];
+    if (gameState.score >= 0) {
+        scores.push(gameState.score);
+        localStorage.setItem("scores", JSON.stringify(scores));
+    }
+    if (scores.length > 10) {
+        scores.shift(); 
+    }
+
+}
+
+function loadScores() {
+    const scores = JSON.parse(localStorage.getItem("scores")) || [];
+    return scores.reverse(); // Reverse the order for display
+}
+
+function displayScores() {
+    const scores = loadScores();
+    const scoreList = document.getElementById('scoreList');
+    scoreList.innerHTML = ''; // Clear previous scores
+
+    if (scores.length === 0) {
+        scoreList.innerHTML = '<li>Još nema rezultata!</li>';
+    } else {
+        for (let i = 0; i < Math.min(scores.length, 10); i++) {
+            const li = document.createElement('li');
+            li.textContent = `Rezultat ${i + 1}: ${scores[i]}`;
+            scoreList.appendChild(li);
+        }
+    }
+}
+
+function clearScores() {
+    localStorage.removeItem("scores"); // Clear scores from local storage   
+    updateAsides(); // Update the score display
 }
 
 // Game Functions
@@ -350,6 +397,11 @@ function handleKeyUp(e) {
 }
 
 function resetGame() {
+    if (glazba) {
+        music = document.getElementById('backgroundMusic');
+        music.play(); // Start music
+        music.loop = true; // Loop the music
+    }
     gameState.obstacles = [];
     gameState.score = 0;
     gameState.gameOver = false;
@@ -361,6 +413,59 @@ function resetGame() {
     player.moving = false;
 
     gameState.gameLoop = requestAnimationFrame(gameLoop); // Restart the game loop
+}
+
+function updateAsides() {
+    const highscoreElement = document.getElementById('highscore');
+    const scoreListElement = document.getElementById('scoreList');
+
+    const scores = loadScores();
+
+    // Update the highest score
+    
+    highscoreElement.textContent = scores.reduce((a, b) => Math.max(a, b), 0); // Get the highest score
+    
+
+    // Update the score list
+    scoreListElement.innerHTML = '';
+    if (scores.length === 0) {
+        scoreListElement.innerHTML = '<li>Još nema rezultata!</li>';
+    } else {
+        for (let i = 0; i < Math.min(scores.length, 10); i++) {
+            const li = document.createElement('li');
+            li.textContent = scores[i];
+            scoreListElement.appendChild(li);
+        }
+    }
+}
+
+// Call updateAsides periodically or after saving a score
+setInterval(updateAsides, 1000); // Update every second
+
+// Background Music Functions
+function playBackgroundMusic() {
+    const music = document.getElementById('backgroundMusic');
+    music.play();
+}
+
+function stopBackgroundMusic() {
+    const music = document.getElementById('backgroundMusic');
+    music.pause();
+    music.currentTime = 0; // Reset to the beginning
+}
+
+function toggleAudio() {
+    const audio = document.getElementById('backgroundMusic');
+    const audioToggle = document.getElementById('audioToggle');
+
+    if (audio.paused) {
+        audio.play();
+        audioToggle.src = 'imgs/audioOn.jpg';
+    } else {
+        audio.pause();
+        audioToggle.src = 'imgs/audioOff.jpg';
+        glazba = false; // Stop background music
+    }
 }
 
 // Start the game

@@ -11,6 +11,20 @@ body {
     color: #6b2205; /* MalinaSot green */
     line-height: 1.6;
     padding: 20px;
+    padding-top: 5px;
+}
+
+.audioBtn {
+    background-color: #3F4F44;
+    border: none;
+    position: absolute;
+    top: 20px;
+    left: 100px;
+}
+
+.audioBtn img {
+    width: 100px;
+    height: 100px;
 }
 
 .container {
@@ -43,7 +57,7 @@ h1 {
 /* Game Page Styles */
 .game-page {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
 }
 
@@ -90,6 +104,11 @@ h1 {
     position: relative;
     overflow: hidden;
     box-shadow: 5px 5px 0px rgba(0, 0, 0, 0.5);
+}
+
+.back-to-menu{
+    display: inline-block;
+    padding: 15px 30px;
 }
 
 .btn:hover {
@@ -207,6 +226,35 @@ h1 {
     background-image: url('imgs/animacija.jpg');
     transform: scaleX(-1); /* Mirror the image for the right side */
     animation: moveDown 5s linear infinite;
+}
+
+aside {
+    width: 30%;
+    color: #FF2A2A;
+    text-shadow: 1px 1px 0px #2AFF2A; /* MalinaSot red */
+    background-color: rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    text-align: center;
+}
+
+aside h2 {
+    font-size: 1.8rem;
+    margin-bottom: 10px;
+}
+
+aside ul {
+    list-style: none;
+    padding: 15px;
+    font-size: 1.4rem;
+    color: #2AFF2A; /* MalinaSot green */
+    text-shadow: 2px 2px 0px #FF2A2A; /* MalinaSot red */
+}
+
+#highscore {
+    font-size: 3.5rem;
+    color: #2AFF2A; /* MalinaSot green */
+    text-shadow: 2px 2px 0px #FF2A2A; /* MalinaSot red */
+    text-align: center;
 }
 
 /* Side Animations */
