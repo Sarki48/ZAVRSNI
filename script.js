@@ -453,6 +453,16 @@ function stopBackgroundMusic() {
     music.pause();
     music.currentTime = 0; // Reset to the beginning
 }
+function checkAudio() {
+    const audio = document.getElementById('backgroundMusic');
+    const audioToggle = document.getElementById('audioToggle');
+    if (audio.paused) {
+        audioToggle.src = 'imgs/audioOff.jpg'; // Show audio off icon
+    }
+    else {
+        audioToggle.src = 'imgs/audioOn.jpg'; // Show audio on icon
+    }
+}
 
 function toggleAudio() {
     const audio = document.getElementById('backgroundMusic');
