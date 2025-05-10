@@ -38,7 +38,7 @@ Retro Utrka je jednostavna, ali uzbudljiva 2D trkaća igra u kojoj igrači uprav
 - **JavaScript**: Za logiku igre i interaktivnost.
 
 ## Zasluge
-- Igru je razvio [Vaše ime].
+- Igru je razvio Ivan Šarčević.
 - Slike i resursi su vlastite izrade ili preuzeti s besplatnih izvora.
 
 ## Licenca
