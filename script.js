@@ -3,12 +3,12 @@ const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 var glazba = true;
 
-checkAudio();
+provjeriAudio();
 
 const config = {
     debugMode: false,
     showHitboxes: false,
-    playerSpeed: 4
+    playerSpeed: 450 // povećano za deltaTime
 };
 
 const road = {
@@ -17,7 +17,7 @@ const road = {
     lanes: 3,
     laneWidth: canvas.width / 3,
     markings: [],
-    speed: 3,
+    speed: 420, // povećano za deltaTime
     leftBoundary: 0,
     rightBoundary: canvas.width
 };
@@ -57,8 +57,8 @@ carImages.yellow.src = 'imgs/auto1.png';
 carImages.purple.src = 'imgs/auto2.png';
 carImages.green.src = 'imgs/auto3.png';
 
-// Initialize Road Markings
-function initRoadMarkings() {
+// Inicijaliziraj oznake na cesti
+function inicijalizirajOznakeCeste() {
     road.markings = [];
     for (let i = 0; i < canvas.height / 60; i++) {
         road.markings.push({
@@ -76,68 +76,72 @@ function initRoadMarkings() {
     }
 }
 
-// Initialize Game
-function initGame() {
-    initRoadMarkings();
-    window.addEventListener('keydown', handleKeyDown);
-    window.addEventListener('keyup', handleKeyUp);
+// Inicijaliziraj igru
+function inicijalizirajIgru() {
+    inicijalizirajOznakeCeste();
+    window.addEventListener('keydown', obradiPritisakTipke);
+    window.addEventListener('keyup', obradiOtpustanjeTipke);
     window.addEventListener('keydown', (e) => {
         if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
             e.preventDefault();
         }
     });
-    playBackgroundMusic();
-    gameLoop();
+    pustiPozadinskuGlazbu();
+    lastTimestamp = 0;
+    requestAnimationFrame(glavnaPetlja);
 }
 
-// Main Game Loop
-function gameLoop() {
-    update();
-    render();
+// Glavna petlja igre
+function glavnaPetlja(timestamp) {
+    if (!lastTimestamp) lastTimestamp = timestamp;
+    const deltaTime = (timestamp - lastTimestamp) / 1000;
+    lastTimestamp = timestamp;
+    azuriraj(deltaTime);
+    iscrtaj();
     if (!gameState.gameOver) {
-        gameState.animationId = requestAnimationFrame(gameLoop);
+        gameState.animationId = requestAnimationFrame(glavnaPetlja);
     }
 }
 
-// Update Game State
-function updateRoadMarkings() {
+// Ažuriraj stanje igre
+function azuriraj(deltaTime) {
+    if (!gameState.gameStarted || gameState.gameOver) return;
+    azurirajOznakeCeste(deltaTime);
+    azurirajKretanjeIgraca(deltaTime);
+    for (let i = gameState.obstacles.length - 1; i >= 0; i--) {
+        const obs = gameState.obstacles[i];
+        obs.y += obs.speed * deltaTime;
+        if (obs.y > canvas.height) {
+            gameState.obstacles.splice(i, 1);
+            gameState.score++;
+            if (gameState.score % 10 === 0) {
+                povecajTezinu();
+            }
+        }
+        if (provjeriSudaranje(player, obs)) {
+            gameState.gameOver = true;
+        }
+    }
+    if (Math.random() < 0.0075) {
+        generirajPrepreku();
+    }
+}
+
+function povecajTezinu() {
+    gameState.obstacles.forEach(obs => obs.speed += 0.5);
+}
+
+function azurirajOznakeCeste(deltaTime) {
     for (const marking of road.markings) {
-        marking.y += road.speed * 1.5;
+        marking.y += road.speed * 1.5 * deltaTime;
         if (marking.y > canvas.height) {
             marking.y = -marking.height;
         }
     }
 }
 
-function increaseDifficulty() {
-    gameState.obstacles.forEach(obs => obs.speed += 0.5);
-}
-
-function update() {
-    if (!gameState.gameStarted || gameState.gameOver) return;
-    updateRoadMarkings();
-    updatePlayerMovement();
-    for (let i = gameState.obstacles.length - 1; i >= 0; i--) {
-        const obs = gameState.obstacles[i];
-        obs.y += obs.speed;
-        if (obs.y > canvas.height) {
-            gameState.obstacles.splice(i, 1);
-            gameState.score++;
-            if (gameState.score % 10 === 0) {
-                increaseDifficulty();
-            }
-        }
-        if (checkCollision(player, obs)) {
-            gameState.gameOver = true;
-        }
-    }
-    if (Math.random() < 0.0075) {
-        generateObstacle();
-    }
-}
-
-// Update player movement to allow free movement
-function updatePlayerMovement() {
+// Ažuriraj kretanje igrača (slobodno kretanje)
+function azurirajKretanjeIgraca(deltaTime) {
     player.speedX = 0;
     player.speedY = 0;
     if (gameState.keysPressed['ArrowLeft']) {
@@ -152,30 +156,30 @@ function updatePlayerMovement() {
     if (gameState.keysPressed['ArrowDown']) {
         player.speedY = config.playerSpeed;
     }
-    player.x += player.speedX;
-    player.y += player.speedY;
+    player.x += player.speedX * (deltaTime ? deltaTime : 1/60);
+    player.y += player.speedY * (deltaTime ? deltaTime : 1/60);
     player.x = Math.max(road.leftBoundary, Math.min(player.x, road.rightBoundary - player.width));
     player.y = Math.max(0, Math.min(player.y, canvas.height - player.height));
 }
 
-// Render Game
-function render() {
+// Iscrtaj igru
+function iscrtaj() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    drawRoad();
-    drawObstacles();
+    iscrtajCestu();
+    iscrtajPrepreke();
     if (!gameState.gameStarted) {
-        drawStartScreen();
+        iscrtajPocetniEkran();
     } else {
-        drawPlayer();
-        drawScore();
+        iscrtajIgraca();
+        iscrtajRezultat();
         if (gameState.gameOver) {
-            drawGameOver();
+            iscrtajKrajIgre();
         }
     }
 }
 
-// Drawing Functions
-function drawRoad() {
+// Funkcije za crtanje
+function iscrtajCestu() {
     ctx.fillStyle = '#111';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = '#FFF';
@@ -184,7 +188,7 @@ function drawRoad() {
     }
 }
 
-function drawPlayer() {
+function iscrtajIgraca() {
     ctx.drawImage(carImages.player, player.x, player.y, player.width, player.height);
     if (config.showHitboxes) {
         ctx.strokeStyle = 'red';
@@ -197,7 +201,7 @@ function drawPlayer() {
     }
 }
 
-function drawObstacles() {
+function iscrtajPrepreke() {
     for (const obstacle of gameState.obstacles) {
         let image;
         switch (obstacle.color) {
@@ -226,14 +230,14 @@ function drawObstacles() {
     }
 }
 
-function drawScore() {
+function iscrtajRezultat() {
     ctx.fillStyle = '#2AFF2A';
     ctx.font = '20px "Press Start 2P"';
     ctx.textAlign = 'left';
     ctx.fillText(`SCORE: ${gameState.score}`, 20, 30);
 }
 
-function drawStartScreen() {
+function iscrtajPocetniEkran() {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = '#2AFF2A';
@@ -248,7 +252,7 @@ function drawStartScreen() {
     ctx.fillText('PRITISNITE BILO KOJU TIPKU', canvas.width/2, canvas.height/2 + 100);
 }
 
-function drawGameOver() {
+function iscrtajKrajIgre() {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = '#FF2A2A';
@@ -257,15 +261,15 @@ function drawGameOver() {
     ctx.fillText('KRAJ IGRE', canvas.width / 2, canvas.height / 2 - 30);
     ctx.fillText(`REZULTAT: ${gameState.score}`, canvas.width / 2, canvas.height / 2 + 30);
     ctx.fillText('PRITISNITE R ZA PONOVNO POKRETANJE', canvas.width / 2, canvas.height / 2 + 80);
-    saveScore();
-    stopBackgroundMusic();
+    spremiRezultat();
+    zaustaviPozadinskuGlazbu();
     sound = document.getElementById('gameOverSound');
     sound.play();
     sound.loop = false;
 }
 
-// Save and Load Scores
-function saveScore() {
+// Spremi i učitaj rezultate
+function spremiRezultat() {
     const scores = JSON.parse(localStorage.getItem("scores")) || [];
     if (gameState.score >= 0) {
         scores.push(gameState.score);
@@ -276,13 +280,13 @@ function saveScore() {
     }
 }
 
-function loadScores() {
+function ucitajRezultate() {
     const scores = JSON.parse(localStorage.getItem("scores")) || [];
     return scores.reverse();
 }
 
-function displayScores() {
-    const scores = loadScores();
+function prikaziRezultate() {
+    const scores = ucitajRezultate();
     const scoreList = document.getElementById('scoreList');
     scoreList.innerHTML = '';
     if (scores.length === 0) {
@@ -296,13 +300,13 @@ function displayScores() {
     }
 }
 
-function clearScores() {
+function obrisiRezultate() {
     localStorage.removeItem("scores");
-    updateAsides();
+    azurirajAside();
 }
 
-// Game Functions
-function generateObstacle() {
+// Funkcije igre
+function generirajPrepreku() {
     const lane = Math.floor(Math.random() * road.lanes);
     const types = [
         { width: 159, height: 145, color: '#FF2A2A' },
@@ -310,12 +314,9 @@ function generateObstacle() {
         { width: 159, height: 145, color: '#0000AA' }
     ];
     const type = types[Math.floor(Math.random() * types.length)];
-    const baseSpeed = 3.5;
-    const speedIncrement = Math.floor(gameState.score / 10) * 0.5;
-    let dynamicSpeed = baseSpeed + speedIncrement;
-    if (gameState.score % 10 === 1 && gameState.score > 0 && gameState.obstacles.length === 0) {
-        dynamicSpeed = Math.min(baseSpeed + 1, 4);
-    }
+    let baseSpeed = 400;
+    const multiplier = Math.pow(1., Math.floor(gameState.score / 10));
+    let dynamicSpeed = baseSpeed * multiplier;
     const lanesOccupied = new Set(gameState.obstacles.map(obs => Math.floor(obs.x / road.laneWidth)));
     if (lanesOccupied.size >= road.lanes - 1) {
         return;
@@ -334,7 +335,7 @@ function generateObstacle() {
     }
 }
 
-function checkCollision(a, b) {
+function provjeriSudaranje(a, b) {
     const margin = 20;
     return a.x + margin < b.x + b.width - margin &&
            a.x + a.width - margin > b.x + margin &&
@@ -342,30 +343,31 @@ function checkCollision(a, b) {
            a.y + a.height > b.y;
 }
 
-// Input Handling
-function handleKeyDown(e) {
+// Obrada tipki
+function obradiPritisakTipke(e) {
     if (!gameState.gameStarted) {
         gameState.gameStarted = true;
         return;
     }
     if (gameState.gameOver && e.key.toLowerCase() === 'r') {
-        resetGame();
+        resetirajIgru();
         return;
     }
     if (gameState.gameOver) return;
     gameState.keysPressed[e.key] = true;
 }
 
-function handleKeyUp(e) {
+function obradiOtpustanjeTipke(e) {
     gameState.keysPressed[e.key] = false;
 }
 
-function resetGame() {
-    if (glazba) {
+function resetirajIgru() {
+    if (!glazba) {
         music = document.getElementById('backgroundMusic');
         music.play();
         music.loop = true;
     }
+    inicijalizirajOznakeCeste();
     gameState.obstacles = [];
     gameState.score = 0;
     gameState.gameOver = false;
@@ -374,14 +376,15 @@ function resetGame() {
     player.x = canvas.width/2 - player.width/2;
     player.targetX = player.x;
     player.moving = false;
-    gameState.gameLoop = requestAnimationFrame(gameLoop);
-    checkAudio();
+    lastTimestamp = 0;
+    gameState.gameLoop = requestAnimationFrame(glavnaPetlja);
+    provjeriAudio();
 }
 
-function updateAsides() {
+function azurirajAside() {
     const highscoreElement = document.getElementById('highscore');
     const scoreListElement = document.getElementById('scoreList');
-    const scores = loadScores();
+    const scores = ucitajRezultate();
     highscoreElement.textContent = scores.reduce((a, b) => Math.max(a, b), 0);
     scoreListElement.innerHTML = '';
     if (scores.length === 0) {
@@ -395,21 +398,21 @@ function updateAsides() {
     }
 }
 
-setInterval(updateAsides, 1000);
+setInterval(azurirajAside, 1000);
 
-// Background Music Functions
-function playBackgroundMusic() {
+// Funkcije za pozadinsku glazbu
+function pustiPozadinskuGlazbu() {
     const music = document.getElementById('backgroundMusic');
     music.play();
 }
 
-function stopBackgroundMusic() {
+function zaustaviPozadinskuGlazbu() {
     const music = document.getElementById('backgroundMusic');
     music.pause();
     music.currentTime = 0;
 }
 
-function checkAudio() {
+function provjeriAudio() {
     const audio = document.getElementById('backgroundMusic');
     const audioToggle = document.getElementById('audioToggle');
     if (audio.paused) {
@@ -418,12 +421,11 @@ function checkAudio() {
     }
     else {
         audioToggle.src = 'imgs/audioOn.jpg';
-        glazba = true;
         audio.play();
     }
 }
 
-function toggleAudio() {
+function promijeniAudio() {
     const audio = document.getElementById('backgroundMusic');
     const audioToggle = document.getElementById('audioToggle');
     if (audio.paused) {
@@ -436,5 +438,5 @@ function toggleAudio() {
     }
 }
 
-// Start the game
-window.onload = initGame;
+// Pokreni igru
+window.onload = inicijalizirajIgru;
