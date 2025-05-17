@@ -1,77 +1,77 @@
-// Canvas Setup
+// Postavke canvasa
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
 var glazba = true;
 
 provjeriAudio();
 
-const config = {
-    debugMode: false,
-    showHitboxes: false,
-    playerSpeed: 450 // povećano za deltaTime
+const postavke = {
+    debugMod: false,
+    prikaziHitbox: false,
+    brzinaIgraca: 450 // povećano za deltaTime
 };
 
-const road = {
-    width: canvas.width,
-    height: canvas.height,
-    lanes: 3,
-    laneWidth: canvas.width / 3,
-    markings: [],
-    speed: 420, // povećano za deltaTime
-    leftBoundary: 0,
-    rightBoundary: canvas.width
+const cesta = {
+    sirina: canvas.width,
+    visina: canvas.height,
+    trake: 3,
+    sirinaTrake: canvas.width / 3,
+    oznake: [],
+    brzina: 420, // povećano za deltaTime
+    lijevaGranica: 0,
+    desnaGranica: canvas.width
 };
 
-const player = {
+const igrac = {
     x: canvas.width / 2 - 16,
     y: canvas.height - 100,
-    width: 122,
-    height: 155,
-    currentLane: 1,
-    moving: false,
-    targetX: canvas.width / 2 - 16,
-    speedX: 0,
-    speedY: 0
+    sirina: 122,
+    visina: 155,
+    trenutnaTraka: 1,
+    pomicanje: false,
+    ciljX: canvas.width / 2 - 16,
+    brzinaX: 0,
+    brzinaY: 0
 };
 
-const gameState = {
-    obstacles: [],
-    score: 0,
-    gameOver: false,
-    animationId: null,
-    gameStarted: false,
-    keysPressed: {}
+const stanjeIgre = {
+    prepreke: [],
+    rezultat: 0,
+    krajIgre: false,
+    animacijaId: null,
+    igraPokrenuta: false,
+    pritisnuteTipke: {}
 };
 
-const carImages = {
-    player: new Image(),
-    blue: new Image(),
-    yellow: new Image(),
-    purple: new Image(),
-    green: new Image()
+const slikeAuta = {
+    igrac: new Image(),
+    plavi: new Image(),
+    zuti: new Image(),
+    ljubicast: new Image(),
+    zeleni: new Image()
 };
 
-carImages.player.src = 'imgs/igrac.jpg';
-carImages.blue.src = 'imgs/auto4.png';
-carImages.yellow.src = 'imgs/auto1.png';
-carImages.purple.src = 'imgs/auto2.png';
-carImages.green.src = 'imgs/auto3.png';
+slikeAuta.igrac.src = 'imgs/igrac.jpg';
+slikeAuta.plavi.src = 'imgs/auto4.png';
+slikeAuta.zuti.src = 'imgs/auto1.png';
+slikeAuta.ljubicast.src = 'imgs/auto2.png';
+slikeAuta.zeleni.src = 'imgs/auto3.png';
 
 // Inicijaliziraj oznake na cesti
 function inicijalizirajOznakeCeste() {
-    road.markings = [];
+    cesta.oznake = [];
     for (let i = 0; i < canvas.height / 60; i++) {
-        road.markings.push({
+        cesta.oznake.push({
             x: canvas.width / 3 - 2.5,
             y: i * 60,
-            width: 5,
-            height: 30
+            sirina: 5,
+            visina: 30
         });
-        road.markings.push({
+        cesta.oznake.push({
             x: (2 * canvas.width) / 3 - 2.5,
             y: i * 60,
-            width: 5,
-            height: 30
+            sirina: 5,
+            visina: 30
         });
     }
 }
@@ -87,39 +87,39 @@ function inicijalizirajIgru() {
         }
     });
     pustiPozadinskuGlazbu();
-    lastTimestamp = 0;
+    zadnjiTimestamp = 0;
     requestAnimationFrame(glavnaPetlja);
 }
 
 // Glavna petlja igre
 function glavnaPetlja(timestamp) {
-    if (!lastTimestamp) lastTimestamp = timestamp;
-    const deltaTime = (timestamp - lastTimestamp) / 1000;
-    lastTimestamp = timestamp;
-    azuriraj(deltaTime);
+    if (!zadnjiTimestamp) zadnjiTimestamp = timestamp;
+    const deltaVrijeme = (timestamp - zadnjiTimestamp) / 1000;
+    zadnjiTimestamp = timestamp;
+    azuriraj(deltaVrijeme);
     iscrtaj();
-    if (!gameState.gameOver) {
-        gameState.animationId = requestAnimationFrame(glavnaPetlja);
+    if (!stanjeIgre.krajIgre) {
+        stanjeIgre.animacijaId = requestAnimationFrame(glavnaPetlja);
     }
 }
 
 // Ažuriraj stanje igre
-function azuriraj(deltaTime) {
-    if (!gameState.gameStarted || gameState.gameOver) return;
-    azurirajOznakeCeste(deltaTime);
-    azurirajKretanjeIgraca(deltaTime);
-    for (let i = gameState.obstacles.length - 1; i >= 0; i--) {
-        const obs = gameState.obstacles[i];
-        obs.y += obs.speed * deltaTime;
-        if (obs.y > canvas.height) {
-            gameState.obstacles.splice(i, 1);
-            gameState.score++;
-            if (gameState.score % 10 === 0) {
+function azuriraj(deltaVrijeme) {
+    if (!stanjeIgre.igraPokrenuta || stanjeIgre.krajIgre) return;
+    azurirajOznakeCeste(deltaVrijeme);
+    azurirajKretanjeIgraca(deltaVrijeme);
+    for (let i = stanjeIgre.prepreke.length - 1; i >= 0; i--) {
+        const prepreka = stanjeIgre.prepreke[i];
+        prepreka.y += prepreka.brzina * deltaVrijeme;
+        if (prepreka.y > canvas.height) {
+            stanjeIgre.prepreke.splice(i, 1);
+            stanjeIgre.rezultat++;
+            if (stanjeIgre.rezultat % 10 === 0) {
                 povecajTezinu();
             }
         }
-        if (provjeriSudaranje(player, obs)) {
-            gameState.gameOver = true;
+        if (provjeriSudaranje(igrac, prepreka)) {
+            stanjeIgre.krajIgre = true;
         }
     }
     if (Math.random() < 0.0075) {
@@ -128,38 +128,38 @@ function azuriraj(deltaTime) {
 }
 
 function povecajTezinu() {
-    gameState.obstacles.forEach(obs => obs.speed += 0.5);
+    stanjeIgre.prepreke.forEach(prepreka => prepreka.brzina += 0.5);
 }
 
-function azurirajOznakeCeste(deltaTime) {
-    for (const marking of road.markings) {
-        marking.y += road.speed * 1.5 * deltaTime;
-        if (marking.y > canvas.height) {
-            marking.y = -marking.height;
+function azurirajOznakeCeste(deltaVrijeme) {
+    for (const oznaka of cesta.oznake) {
+        oznaka.y += cesta.brzina * 1.5 * deltaVrijeme;
+        if (oznaka.y > canvas.height) {
+            oznaka.y = -oznaka.visina;
         }
     }
 }
 
 // Ažuriraj kretanje igrača (slobodno kretanje)
-function azurirajKretanjeIgraca(deltaTime) {
-    player.speedX = 0;
-    player.speedY = 0;
-    if (gameState.keysPressed['ArrowLeft']) {
-        player.speedX = -config.playerSpeed;
+function azurirajKretanjeIgraca(deltaVrijeme) {
+    igrac.brzinaX = 0;
+    igrac.brzinaY = 0;
+    if (stanjeIgre.pritisnuteTipke['ArrowLeft']) {
+        igrac.brzinaX = -postavke.brzinaIgraca;
     }
-    if (gameState.keysPressed['ArrowRight']) {
-        player.speedX = config.playerSpeed;
+    if (stanjeIgre.pritisnuteTipke['ArrowRight']) {
+        igrac.brzinaX = postavke.brzinaIgraca;
     }
-    if (gameState.keysPressed['ArrowUp']) {
-        player.speedY = -config.playerSpeed;
+    if (stanjeIgre.pritisnuteTipke['ArrowUp']) {
+        igrac.brzinaY = -postavke.brzinaIgraca;
     }
-    if (gameState.keysPressed['ArrowDown']) {
-        player.speedY = config.playerSpeed;
+    if (stanjeIgre.pritisnuteTipke['ArrowDown']) {
+        igrac.brzinaY = postavke.brzinaIgraca;
     }
-    player.x += player.speedX * (deltaTime ? deltaTime : 1/60);
-    player.y += player.speedY * (deltaTime ? deltaTime : 1/60);
-    player.x = Math.max(road.leftBoundary, Math.min(player.x, road.rightBoundary - player.width));
-    player.y = Math.max(0, Math.min(player.y, canvas.height - player.height));
+    igrac.x += igrac.brzinaX * (deltaVrijeme ? deltaVrijeme : 1/60);
+    igrac.y += igrac.brzinaY * (deltaVrijeme ? deltaVrijeme : 1/60);
+    igrac.x = Math.max(cesta.lijevaGranica, Math.min(igrac.x, cesta.desnaGranica - igrac.sirina));
+    igrac.y = Math.max(0, Math.min(igrac.y, canvas.height - igrac.visina));
 }
 
 // Iscrtaj igru
@@ -167,12 +167,12 @@ function iscrtaj() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     iscrtajCestu();
     iscrtajPrepreke();
-    if (!gameState.gameStarted) {
+    if (!stanjeIgre.igraPokrenuta) {
         iscrtajPocetniEkran();
     } else {
         iscrtajIgraca();
         iscrtajRezultat();
-        if (gameState.gameOver) {
+        if (stanjeIgre.krajIgre) {
             iscrtajKrajIgre();
         }
     }
@@ -183,48 +183,48 @@ function iscrtajCestu() {
     ctx.fillStyle = '#111';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     ctx.fillStyle = '#FFF';
-    for (const mark of road.markings) {
-        ctx.fillRect(mark.x, mark.y, mark.width, mark.height);
+    for (const oznaka of cesta.oznake) {
+        ctx.fillRect(oznaka.x, oznaka.y, oznaka.sirina, oznaka.visina);
     }
 }
 
 function iscrtajIgraca() {
-    ctx.drawImage(carImages.player, player.x, player.y, player.width, player.height);
-    if (config.showHitboxes) {
+    ctx.drawImage(slikeAuta.igrac, igrac.x, igrac.y, igrac.sirina, igrac.visina);
+    if (postavke.prikaziHitbox) {
         ctx.strokeStyle = 'red';
         ctx.strokeRect(
-            player.x + player.width * 0.1,
-            player.y,
-            player.width * 0.8,
-            player.height * 1.1
+            igrac.x + igrac.sirina * 0.1,
+            igrac.y,
+            igrac.sirina * 0.8,
+            igrac.visina * 1.1
         );
     }
 }
 
 function iscrtajPrepreke() {
-    for (const obstacle of gameState.obstacles) {
-        let image;
-        switch (obstacle.color) {
+    for (const prepreka of stanjeIgre.prepreke) {
+        let slika;
+        switch (prepreka.boja) {
             case '#0000AA':
-                image = carImages.blue;
+                slika = slikeAuta.plavi;
                 break;
             case '#FFAA2A':
-                image = carImages.yellow;
+                slika = slikeAuta.zuti;
                 break;
             case '#AA2AFF':
-                image = carImages.purple;
+                slika = slikeAuta.ljubicast;
                 break;
             default:
-                image = carImages.green;
+                slika = slikeAuta.zeleni;
         }
-        ctx.drawImage(image, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
-        if (config.showHitboxes) {
+        ctx.drawImage(slika, prepreka.x, prepreka.y, prepreka.sirina, prepreka.visina);
+        if (postavke.prikaziHitbox) {
             ctx.strokeStyle = 'blue';
             ctx.strokeRect(
-                obstacle.x + obstacle.width * 0.1,
-                obstacle.y,
-                obstacle.width * 0.8,
-                obstacle.height * 1.1
+                prepreka.x + prepreka.sirina * 0.1,
+                prepreka.y,
+                prepreka.sirina * 0.8,
+                prepreka.visina * 1.1
             );
         }
     }
@@ -234,7 +234,7 @@ function iscrtajRezultat() {
     ctx.fillStyle = '#2AFF2A';
     ctx.font = '20px "Press Start 2P"';
     ctx.textAlign = 'left';
-    ctx.fillText(`SCORE: ${gameState.score}`, 20, 30);
+    ctx.fillText(`REZULTAT: ${stanjeIgre.rezultat}`, 20, 30);
 }
 
 function iscrtajPocetniEkran() {
@@ -259,141 +259,142 @@ function iscrtajKrajIgre() {
     ctx.font = '17px "Press Start 2P"';
     ctx.textAlign = 'center';
     ctx.fillText('KRAJ IGRE', canvas.width / 2, canvas.height / 2 - 30);
-    ctx.fillText(`REZULTAT: ${gameState.score}`, canvas.width / 2, canvas.height / 2 + 30);
+    ctx.fillText(`REZULTAT: ${stanjeIgre.rezultat}`, canvas.width / 2, canvas.height / 2 + 30);
     ctx.fillText('PRITISNITE R ZA PONOVNO POKRETANJE', canvas.width / 2, canvas.height / 2 + 80);
     spremiRezultat();
     zaustaviPozadinskuGlazbu();
-    sound = document.getElementById('gameOverSound');
-    sound.play();
-    sound.loop = false;
+    zvuk = document.getElementById('gameOverSound');
+    zvuk.play();
+    zvuk.loop = false;
 }
 
 // Spremi i učitaj rezultate
 function spremiRezultat() {
-    const scores = JSON.parse(localStorage.getItem("scores")) || [];
-    if (gameState.score >= 0) {
-        scores.push(gameState.score);
-        localStorage.setItem("scores", JSON.stringify(scores));
+    const rezultati = JSON.parse(localStorage.getItem("rezultati")) || [];
+    if (stanjeIgre.rezultat >= 0) {
+        rezultati.push(stanjeIgre.rezultat);
+        localStorage.setItem("rezultati", JSON.stringify(rezultati));
     }
-    if (scores.length > 10) {
-        scores.shift();
+    if (rezultati.length > 10) {
+        rezultati.shift();
     }
 }
 
 function ucitajRezultate() {
-    const scores = JSON.parse(localStorage.getItem("scores")) || [];
-    return scores.reverse();
+    const rezultati = JSON.parse(localStorage.getItem("rezultati")) || [];
+    return rezultati.reverse();
 }
 
 function prikaziRezultate() {
-    const scores = ucitajRezultate();
-    const scoreList = document.getElementById('scoreList');
-    scoreList.innerHTML = '';
-    if (scores.length === 0) {
-        scoreList.innerHTML = '<li>Još nema rezultata!</li>';
+    const rezultati = ucitajRezultate();
+    const listaRezultata = document.getElementById('scoreList');
+    listaRezultata.innerHTML = '';
+    if (rezultati.length === 0) {
+        listaRezultata.innerHTML = '<li>Još nema rezultata!</li>';
     } else {
-        for (let i = 0; i < Math.min(scores.length, 10); i++) {
+        for (let i = 0; i < Math.min(rezultati.length, 10); i++) {
             const li = document.createElement('li');
-            li.textContent = `Rezultat ${i + 1}: ${scores[i]}`;
-            scoreList.appendChild(li);
+            li.textContent = `Rezultat ${i + 1}: ${rezultati[i]}`;
+            listaRezultata.appendChild(li);
         }
     }
 }
 
 function obrisiRezultate() {
-    localStorage.removeItem("scores");
+    localStorage.removeItem("rezultati");
     azurirajAside();
 }
 
 // Funkcije igre
 function generirajPrepreku() {
-    const lane = Math.floor(Math.random() * road.lanes);
-    const types = [
-        { width: 159, height: 145, color: '#FF2A2A' },
-        { width: 159, height: 145, color: '#FFAA2A' },
-        { width: 159, height: 145, color: '#0000AA' }
+    const traka = Math.floor(Math.random() * cesta.trake);
+    const tipovi = [
+        { sirina: 159, visina: 145, boja: '#FF2A2A' },
+        { sirina: 159, visina: 145, boja: '#FFAA2A' },
+        { sirina: 159, visina: 145, boja: '#0000AA' }
     ];
-    const type = types[Math.floor(Math.random() * types.length)];
-    let baseSpeed = 400;
-    const multiplier = Math.pow(1., Math.floor(gameState.score / 10));
-    let dynamicSpeed = baseSpeed * multiplier;
-    const lanesOccupied = new Set(gameState.obstacles.map(obs => Math.floor(obs.x / road.laneWidth)));
-    if (lanesOccupied.size >= road.lanes - 1) {
+    const tip = tipovi[Math.floor(Math.random() * tipovi.length)];
+    let osnovnaBrzina = 400;
+    const mnozitelj = Math.pow(1., Math.floor(stanjeIgre.rezultat / 10));
+    let dinamicnaBrzina = osnovnaBrzina * mnozitelj;
+    const zauzeteTrake = new Set(stanjeIgre.prepreke.map(prepreka => Math.floor(prepreka.x / cesta.sirinaTrake)));
+    if (zauzeteTrake.size >= cesta.trake - 1) {
         return;
     }
-    const laneX = lane * road.laneWidth + (road.laneWidth - type.width) / 2;
-    const overlapping = gameState.obstacles.some(obs => {
-        return obs.x === laneX && obs.y < type.height * 2;
+    const trakaX = traka * cesta.sirinaTrake + (cesta.sirinaTrake - tip.sirina) / 2;
+    const preklapanje = stanjeIgre.prepreke.some(prepreka => {
+        return prepreka.x === trakaX && prepreka.y < tip.visina * 2;
     });
-    if (!overlapping) {
-        gameState.obstacles.push({
-            x: laneX,
-            y: -type.height,
-            speed: dynamicSpeed,
-            ...type
+    if (!preklapanje) {
+        stanjeIgre.prepreke.push({
+            x: trakaX,
+            y: -tip.visina,
+            brzina: dinamicnaBrzina,
+            ...tip
         });
     }
 }
 
 function provjeriSudaranje(a, b) {
-    const margin = 20;
-    return a.x + margin < b.x + b.width - margin &&
-           a.x + a.width - margin > b.x + margin &&
-           a.y < b.y + b.height &&
-           a.y + a.height > b.y;
+    const margina = 20;
+    return a.x + margina < b.x + b.sirina - margina &&
+           a.x + a.sirina - margina > b.x + margina &&
+           a.y < b.y + b.visina &&
+           a.y + a.visina > b.y;
 }
 
 // Obrada tipki
 function obradiPritisakTipke(e) {
-    if (!gameState.gameStarted) {
-        gameState.gameStarted = true;
+    if (!stanjeIgre.igraPokrenuta) {
+        stanjeIgre.igraPokrenuta = true;
         return;
     }
-    if (gameState.gameOver && e.key.toLowerCase() === 'r') {
+    if (stanjeIgre.krajIgre && e.key.toLowerCase() === 'r') {
         resetirajIgru();
         return;
     }
-    if (gameState.gameOver) return;
-    gameState.keysPressed[e.key] = true;
+    if (stanjeIgre.krajIgre) return;
+    stanjeIgre.pritisnuteTipke[e.key] = true;
 }
 
 function obradiOtpustanjeTipke(e) {
-    gameState.keysPressed[e.key] = false;
+    stanjeIgre.pritisnuteTipke[e.key] = false;
 }
 
 function resetirajIgru() {
     if (!glazba) {
-        music = document.getElementById('backgroundMusic');
-        music.play();
-        music.loop = true;
+        glazba = true;
+        glazbaElem = document.getElementById('backgroundMusic');
+        glazbaElem.play();
+        glazbaElem.loop = true;
     }
     inicijalizirajOznakeCeste();
-    gameState.obstacles = [];
-    gameState.score = 0;
-    gameState.gameOver = false;
-    gameState.gameStarted = true;
-    player.currentLane = 1;
-    player.x = canvas.width/2 - player.width/2;
-    player.targetX = player.x;
-    player.moving = false;
-    lastTimestamp = 0;
-    gameState.gameLoop = requestAnimationFrame(glavnaPetlja);
+    stanjeIgre.prepreke = [];
+    stanjeIgre.rezultat = 0;
+    stanjeIgre.krajIgre = false;
+    stanjeIgre.igraPokrenuta = true;
+    igrac.trenutnaTraka = 1;
+    igrac.x = canvas.width/2 - igrac.sirina/2;
+    igrac.ciljX = igrac.x;
+    igrac.pomicanje = false;
+    zadnjiTimestamp = 0;
+    stanjeIgre.animacijaId = requestAnimationFrame(glavnaPetlja);
     provjeriAudio();
 }
 
 function azurirajAside() {
     const highscoreElement = document.getElementById('highscore');
-    const scoreListElement = document.getElementById('scoreList');
-    const scores = ucitajRezultate();
-    highscoreElement.textContent = scores.reduce((a, b) => Math.max(a, b), 0);
-    scoreListElement.innerHTML = '';
-    if (scores.length === 0) {
-        scoreListElement.innerHTML = '<li>Još nema rezultata!</li>';
+    const listaRezultata = document.getElementById('scoreList');
+    const rezultati = ucitajRezultate();
+    highscoreElement.textContent = rezultati.reduce((a, b) => Math.max(a, b), 0);
+    listaRezultata.innerHTML = '';
+    if (rezultati.length === 0) {
+        listaRezultata.innerHTML = '<li>Još nema rezultata!</li>';
     } else {
-        for (let i = 0; i < Math.min(scores.length, 10); i++) {
+        for (let i = 0; i < Math.min(rezultati.length, 10); i++) {
             const li = document.createElement('li');
-            li.textContent = scores[i];
-            scoreListElement.appendChild(li);
+            li.textContent = rezultati[i];
+            listaRezultata.appendChild(li);
         }
     }
 }
@@ -402,14 +403,14 @@ setInterval(azurirajAside, 1000);
 
 // Funkcije za pozadinsku glazbu
 function pustiPozadinskuGlazbu() {
-    const music = document.getElementById('backgroundMusic');
-    music.play();
+    const glazbaElem = document.getElementById('backgroundMusic');
+    glazbaElem.play();
 }
 
 function zaustaviPozadinskuGlazbu() {
-    const music = document.getElementById('backgroundMusic');
-    music.pause();
-    music.currentTime = 0;
+    const glazbaElem = document.getElementById('backgroundMusic');
+    glazbaElem.pause();
+    glazbaElem.currentTime = 0;
 }
 
 function provjeriAudio() {
