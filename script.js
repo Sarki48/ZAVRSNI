@@ -1,6 +1,8 @@
 // Postavke canvasa
+
 const canvas = document.getElementById('gameCanvas');
 const ctx = canvas.getContext('2d');
+
 var glazba = true;
 
 provjeriAudio();
@@ -8,7 +10,7 @@ provjeriAudio();
 const postavke = {
     debugMod: false,
     prikaziHitbox: false,
-    brzinaIgraca: 450 // povećano za deltaTime
+    brzinaIgraca: 450 
 };
 
 const cesta = {
@@ -17,19 +19,19 @@ const cesta = {
     trake: 3,
     sirinaTrake: canvas.width / 3,
     oznake: [],
-    brzina: 420, // povećano za deltaTime
+    brzina: 420, 
     lijevaGranica: 0,
     desnaGranica: canvas.width
 };
 
 const igrac = {
-    x: canvas.width / 2 - 16,
+    x: canvas.width / 2 - (122 / 2),
     y: canvas.height - 100,
     sirina: 122,
     visina: 155,
     trenutnaTraka: 1,
     pomicanje: false,
-    ciljX: canvas.width / 2 - 16,
+    ciljX: canvas.width / 2 - (122 / 2),
     brzinaX: 0,
     brzinaY: 0
 };
@@ -58,6 +60,7 @@ slikeAuta.ljubicast.src = 'imgs/auto2.png';
 slikeAuta.zeleni.src = 'imgs/auto3.png';
 
 // Inicijaliziraj oznake na cesti
+
 function inicijalizirajOznakeCeste() {
     cesta.oznake = [];
     for (let i = 0; i < canvas.height / 60; i++) {
@@ -77,6 +80,7 @@ function inicijalizirajOznakeCeste() {
 }
 
 // Inicijaliziraj igru
+
 function inicijalizirajIgru() {
     inicijalizirajOznakeCeste();
     window.addEventListener('keydown', obradiPritisakTipke);
@@ -127,8 +131,11 @@ function azuriraj(deltaVrijeme) {
     }
 }
 
+let osnovnaBrzinaPrepreke = 400; 
+
 function povecajTezinu() {
-    stanjeIgre.prepreke.forEach(prepreka => prepreka.brzina += 0.5);
+    stanjeIgre.prepreke.forEach(prepreka => prepreka.brzina += 150);
+    osnovnaBrzinaPrepreke += 150;
 }
 
 function azurirajOznakeCeste(deltaVrijeme) {
@@ -141,6 +148,7 @@ function azurirajOznakeCeste(deltaVrijeme) {
 }
 
 // Ažuriraj kretanje igrača (slobodno kretanje)
+
 function azurirajKretanjeIgraca(deltaVrijeme) {
     igrac.brzinaX = 0;
     igrac.brzinaY = 0;
@@ -269,6 +277,7 @@ function iscrtajKrajIgre() {
 }
 
 // Spremi i učitaj rezultate
+
 function spremiRezultat() {
     const rezultati = JSON.parse(localStorage.getItem("rezultati")) || [];
     if (stanjeIgre.rezultat >= 0) {
@@ -306,6 +315,7 @@ function obrisiRezultate() {
 }
 
 // Funkcije igre
+
 function generirajPrepreku() {
     const traka = Math.floor(Math.random() * cesta.trake);
     const tipovi = [
@@ -314,9 +324,8 @@ function generirajPrepreku() {
         { sirina: 159, visina: 145, boja: '#0000AA' }
     ];
     const tip = tipovi[Math.floor(Math.random() * tipovi.length)];
-    let osnovnaBrzina = 400;
-    const mnozitelj = Math.pow(1., Math.floor(stanjeIgre.rezultat / 10));
-    let dinamicnaBrzina = osnovnaBrzina * mnozitelj;
+    // Korištenje globalne osnovne brzine
+    let dinamicnaBrzina = osnovnaBrzinaPrepreke;
     const zauzeteTrake = new Set(stanjeIgre.prepreke.map(prepreka => Math.floor(prepreka.x / cesta.sirinaTrake)));
     if (zauzeteTrake.size >= cesta.trake - 1) {
         return;
@@ -402,9 +411,12 @@ function azurirajAside() {
 setInterval(azurirajAside, 1000);
 
 // Funkcije za pozadinsku glazbu
+
 function pustiPozadinskuGlazbu() {
     const glazbaElem = document.getElementById('backgroundMusic');
+    if (glazba) {
     glazbaElem.play();
+    }
 }
 
 function zaustaviPozadinskuGlazbu() {
