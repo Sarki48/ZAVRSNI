@@ -371,12 +371,6 @@ function obradiOtpustanjeTipke(e) {
 }
 
 function resetirajIgru() {
-    if (!glazba) {
-        glazba = true;
-        glazbaElem = document.getElementById('backgroundMusic');
-        glazbaElem.play();
-        glazbaElem.loop = true;
-    }
     inicijalizirajOznakeCeste();
     stanjeIgre.prepreke = [];
     stanjeIgre.rezultat = 0;
